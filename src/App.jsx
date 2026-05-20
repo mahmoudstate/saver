@@ -325,6 +325,7 @@ export default function App() {
   const [appAlert, setAppAlert] = useState(null);
 
   const [hideTotal, setHideTotal] = useState(true);
+  const [dashScrollY, setDashScrollY] = useState(0);
   const [ledgerBank, setLedgerBank] = useState(null);
   const [ledgerGroup, setLedgerGroup] = useState(null);
   const [ledgerSaving, setLedgerSaving] = useState(null);
@@ -446,7 +447,7 @@ export default function App() {
 
       {!ledgerBank && !ledgerGroup && !ledgerSaving && !ledgerBudget ? (
         <>
-          {tab==="dashboard" && <Dashboard txns={filteredTxns} bills={bills} budgets={budgets} banks={banks} groups={groups} expCats={expCats} savings={savings} filterMonth={filterMonth} setFilterMonth={setFilterMonth} availMonths={availMonths} username={username} bankBalance={bankBalance} txnsAll={txns} onDeleteTxn={delTxn} onUpdateTxn={updateTxn} onOpenBank={setLedgerBank} onOpenGroup={setLedgerGroup} onOpenSaving={setLedgerSaving} onOpenBudget={setLedgerBudget} hideTotal={hideTotal} setHideTotal={setHideTotal} />}
+          {tab==="dashboard" && <Dashboard txns={filteredTxns} bills={bills} budgets={budgets} banks={banks} groups={groups} expCats={expCats} savings={savings} filterMonth={filterMonth} setFilterMonth={setFilterMonth} availMonths={availMonths} username={username} bankBalance={bankBalance} txnsAll={txns} onDeleteTxn={delTxn} onUpdateTxn={updateTxn} onOpenBank={(b)=>{ setDashScrollY(window.scrollY); setLedgerBank(b); }} onOpenGroup={(g)=>{ setDashScrollY(window.scrollY); setLedgerGroup(g); }} onOpenSaving={(s)=>{ setDashScrollY(window.scrollY); setLedgerSaving(s); }} onOpenBudget={(bdg)=>{ setDashScrollY(window.scrollY); setLedgerBudget(bdg); }} hideTotal={hideTotal} setHideTotal={setHideTotal} />}
           {tab==="add" && <AddTransaction banks={banks} expCats={expCats} incCats={incCats} savings={savings} currency={currency} onAdd={addTxn} onSaveSavings={saveSavings} onDone={()=>setTab("dashboard")} bankBalance={bankBalance}/>}
           {tab==="history" && <History txns={txns} allCats={allCats} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} incCats={incCats} currency={currency} availMonths={availMonths}/>}
           
@@ -461,10 +462,10 @@ export default function App() {
         </>
       ) : (
         <>
-          {ledgerBank && <DeepLedgerView title={`${ledgerBank.name} History`} subtitle={fmt(bankBalance(ledgerBank.id))} txns={txns.filter(t=>t.bankId===ledgerBank.id)} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>setLedgerBank(null)} />}
-          {ledgerGroup && <DeepLedgerView title={`${ledgerGroup.name} History`} subtitle="Categorized Expenses" txns={txns.filter(t=>t.type==="expense" && ledgerGroup.cats.includes(t.catId))} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>setLedgerGroup(null)} />}
-          {ledgerSaving && <DeepLedgerView title={`${ledgerSaving.name} History`} subtitle={`Goal Target: ${fmt(ledgerSaving.goal)}`} txns={txns.filter(t=>t.type==="saving" && t.catName===ledgerSaving.name)} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>setLedgerSaving(null)} />}
-          {ledgerBudget && <DeepLedgerView title={`${ledgerBudget.name} History`} subtitle={`Limit: ${fmt(ledgerBudget.amount)}`} txns={txns.filter(t=>t.type==="expense" && ledgerBudget.cats.includes(t.catId))} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>setLedgerBudget(null)} />}
+          {ledgerBank && <DeepLedgerView title={`${ledgerBank.name} History`} subtitle={fmt(bankBalance(ledgerBank.id))} txns={txns.filter(t=>t.bankId===ledgerBank.id)} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>{ setLedgerBank(null); setTimeout(()=>window.scrollTo(0,dashScrollY),50); }} />}
+          {ledgerGroup && <DeepLedgerView title={`${ledgerGroup.name} History`} subtitle="Categorized Expenses" txns={txns.filter(t=>t.type==="expense" && ledgerGroup.cats.includes(t.catId))} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>{ setLedgerGroup(null); setTimeout(()=>window.scrollTo(0,dashScrollY),50); }} />}
+          {ledgerSaving && <DeepLedgerView title={`${ledgerSaving.name} History`} subtitle={`Goal Target: ${fmt(ledgerSaving.goal)}`} txns={txns.filter(t=>t.type==="saving" && t.catName===ledgerSaving.name)} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>{ setLedgerSaving(null); setTimeout(()=>window.scrollTo(0,dashScrollY),50); }} />}
+          {ledgerBudget && <DeepLedgerView title={`${ledgerBudget.name} History`} subtitle={`Limit: ${fmt(ledgerBudget.amount)}`} txns={txns.filter(t=>t.type==="expense" && ledgerBudget.cats.includes(t.catId))} onDelete={delTxn} onUpdate={updateTxn} banks={banks} expCats={expCats} onClose={()=>{ setLedgerBudget(null); setTimeout(()=>window.scrollTo(0,dashScrollY),50); }} />}
         </>
       )}
       
@@ -478,6 +479,8 @@ function BottomNav({ tab, setTab, expCats, banks, onAdd, currency, bankBalance, 
   const [showQuick, setShowQuick] = useState(false);
   const [quickForm, setQuickForm] = useState(null);
   const pressTimer = useRef(null);
+  // Remember last used amount & bank per shortcut
+  const lastUsed = useRef({});
 
   const activeShortcuts = quickActions.filter(q => q.catId);
 
@@ -486,10 +489,14 @@ function BottomNav({ tab, setTab, expCats, banks, onAdd, currency, bankBalance, 
 
   const handleQuickSelect = (shortcut) => {
     setShowQuick(false);
+    // Use last used values if available, else use shortcut defaults
+    const prev = lastUsed.current[shortcut.id] || {};
     setQuickForm({
       catId: shortcut.catId,
-      amount: shortcut.amount || "50",
-      bankId: shortcut.bankId && banks.some(b=>b.id===shortcut.bankId) ? shortcut.bankId : (banks[0]?.id || ""),
+      shortcutId: shortcut.id,
+      amount: prev.amount || shortcut.amount || "50",
+      bankId: prev.bankId && banks.some(b=>b.id===prev.bankId) ? prev.bankId :
+              shortcut.bankId && banks.some(b=>b.id===shortcut.bankId) ? shortcut.bankId : (banks[0]?.id || ""),
       note: ""
     });
   };
@@ -509,6 +516,10 @@ function BottomNav({ tab, setTab, expCats, banks, onAdd, currency, bankBalance, 
     });
 
     if (success !== false) {
+      // Save last used values for next time
+      if (quickForm.shortcutId) {
+        lastUsed.current[quickForm.shortcutId] = { amount: quickForm.amount, bankId: quickForm.bankId };
+      }
       setQuickForm(null); 
       setTab("dashboard");
     }
@@ -702,17 +713,25 @@ function Dashboard({ txns, bills, budgets, banks, groups, expCats, savings, filt
               const spent = txnsAll.filter(t => t.type === "expense" && t.date.startsWith(currentMonthStr) && bdg.cats.includes(t.catId)).reduce((a,t) => a+t.amount, 0);
               const remaining = Math.max(0, bdg.amount - spent);
               const safeDaily = remaining / daysLeft;
+              const pct = bdg.amount > 0 ? Math.min(100, Math.round((spent/bdg.amount)*100)) : 0;
+              const barColor = pct >= 90 ? C.red : pct >= 70 ? C.yellow : C.accent;
               return (
-                <Card key={bdg.id} onClick={()=>onOpenBudget(bdg)} className="interactive-card" style={{padding:"14px", cursor: "pointer", transition: "transform 0.1s ease"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}><div style={{width:8,height:8,borderRadius:99,background:C.accent}}/><span style={{color:C.text,fontSize:14,fontWeight:700}}>{bdg.name}</span></div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:10}}>
-                    <div>
-                      <div style={{color:C.accent,fontSize:20,fontWeight:800,lineHeight:1}}>{hideTotal?"••••":fmt(remaining)}</div>
-                      <div style={{color:C.muted,fontSize:11,fontWeight:500,marginTop:5}}>Safe Daily: {fmt(safeDaily)}</div>
-                    </div>
-                    <div style={{color:C.muted,fontSize:12}}>of {fmt(bdg.amount)}</div>
+                <Card key={bdg.id} onClick={()=>onOpenBudget(bdg)} className="interactive-card" style={{padding:"14px", cursor:"pointer", transition:"transform 0.1s ease"}}>
+                  {/* Title + % pill */}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <span style={{color:C.text,fontSize:14,fontWeight:700}}>{bdg.name}</span>
+                    <Pill color={barColor}>{pct}%</Pill>
                   </div>
-                  <ProgressBar value={spent} max={bdg.amount} color={C.accent}/>
+                  {/* Spent of budget */}
+                  <div style={{color:C.muted,fontSize:11,marginBottom:6}}>
+                    Spent <span style={{color:C.text,fontWeight:700}}>{hideTotal?"••••":fmt(spent)}</span> of {hideTotal?"••••":fmt(bdg.amount)}
+                  </div>
+                  {/* Remaining + safe daily */}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <span style={{color:remaining===0?C.red:C.accent,fontSize:18,fontWeight:800}}>{hideTotal?"••••":fmt(remaining)} left</span>
+                    <span style={{color:C.muted,fontSize:11}}>{fmt(safeDaily)}/day safe</span>
+                  </div>
+                  <ProgressBar value={spent} max={bdg.amount} color={barColor}/>
                 </Card>
               );
             })}
@@ -974,6 +993,7 @@ function EditTxnModal({ txn, banks, expCats, incCats, currency, onSave, onClose 
 
 // ─── Savings Page ─────────────────────────────────────────────────────────────
 function SavingsPage({ savings, onSave, txns, onBack }) {
+  useEffect(()=>{ window.scrollTo(0,0); },[]);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
@@ -1025,6 +1045,7 @@ function SavingsPage({ savings, onSave, txns, onBack }) {
 
 // ─── Budgets Screen ───────────────────────────────────────────────────────────
 function BudgetsPage({ budgets, expCats, onSave, onBack, currency }) {
+  useEffect(()=>{ window.scrollTo(0,0); },[]);
   const [showAdd, setShowAdd] = useState(false);
   const [editId, setEditId] = useState(null);
   const [name, setName] = useState("");
@@ -1094,6 +1115,7 @@ function BudgetsPage({ budgets, expCats, onSave, onBack, currency }) {
 
 // ─── Quick Actions Slots ──────────────────────────────────────────────────────
 function QuickActionsSetup({ quickActions, expCats, banks, onSave, onBack }) {
+  useEffect(()=>{ window.scrollTo(0,0); },[]);
   const [editingId, setEditingId] = useState(null);
   const [catId, setCatId] = useState("");
   const [amount, setAmount] = useState("");
