@@ -43,6 +43,9 @@ const ICONS = {
   rent:"🏠", education:"📚", tech:"💻", others:"📌",
   salary:"💼", freelance:"💡", gift:"🎁", investment:"📈", other_income:"💰",
   bank:"🏦", cash:"💵", goal:"🎯", trash:"🗑", edit:"✎", close:"✕", check:"✓",
+  parking:"🅿️", fuel:"⛽", car_repair:"🔧", takeaway:"🍕",
+  barber:"💈", pets:"🐾", travel:"✈️", gaming:"🎮",
+  pharmacy:"💊", laundry:"🧺", tuition:"🎓", gym:"🏋️",
 };
 
 const DEFAULT_BANKS = [{ id:"b1", name:"CIB", color:C.blue }, { id:"b2", name:"NBE", color:C.accent }, { id:"b3", name:"Cash", color:C.yellow }];
@@ -304,6 +307,48 @@ function EmptyState({ icon, message }) {
   );
 }
 
+// ─── Splash Screen ────────────────────────────────────────────────────────────
+function SplashScreen() {
+  const [phase, setPhase] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 600);
+    const t2 = setTimeout(() => setPhase(2), 2000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:999,background:"#1c1f26",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",opacity:phase===2?0:1,transition:phase===2?"opacity 0.7s ease":"none",userSelect:"none"}}>
+      <style>{`
+        @keyframes logoIn{0%{transform:scale(0.3) rotate(-10deg);opacity:0}65%{transform:scale(1.08) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:1}}
+        @keyframes arrowIn{0%{opacity:0;transform:translate(-6px,6px)}100%{opacity:1;transform:translate(0,0)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:0.25}40%{transform:translateY(-7px);opacity:1}}
+      `}</style>
+      {/* Logo */}
+      <div style={{animation:"logoIn 0.9s cubic-bezier(0.175,0.885,0.32,1.275) both",marginBottom:28}}>
+        <svg width={120} height={120} viewBox="0 0 120 120">
+          <rect width={120} height={120} rx={26} fill="#252830"/>
+          {/* S letter */}
+          <text x={22} y={88} fontFamily="Georgia,serif" fontSize={82} fontWeight="900" fill="#e8e8f0" letterSpacing={-2}>S</text>
+          {/* Arrow */}
+          <g style={{animation:"arrowIn 0.5s ease 0.8s both"}}>
+            <line x1={62} y1={62} x2={88} y2={34} stroke="url(#ag)" strokeWidth={5} strokeLinecap="round"/>
+            <polygon points="88,34 74,34 88,48" fill="#3d9e5f"/>
+            <defs><linearGradient id="ag" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#2d7a48"/><stop offset="100%" stopColor="#4ade80"/></linearGradient></defs>
+          </g>
+        </svg>
+      </div>
+      {/* App name */}
+      <div style={{color:"#e8e8f0",fontSize:34,fontWeight:800,letterSpacing:8,textTransform:"uppercase",marginBottom:8,animation:"logoIn 0.9s 0.1s both"}}>SAVER</div>
+      {/* Tagline */}
+      <div style={{color:"#8888a8",fontSize:13,fontWeight:400,letterSpacing:2,fontStyle:"italic",opacity:phase>=1?1:0,animation:phase>=1?"fadeUp 0.6s ease forwards":"none",marginBottom:70}}>Easy come, easy go.</div>
+      {/* Dots */}
+      <div style={{display:"flex",gap:7,position:"absolute",bottom:54}}>
+        {[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:99,background:"#6ee7b7",animation:`bounce 1.3s ease ${i*0.22}s infinite`}}/>)}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Application Logic ───────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("dashboard");
@@ -317,6 +362,7 @@ export default function App() {
   const [budgets, setBudgets] = useState([]);
   const [quickActions, setQuickActions] = useState(DEFAULT_QUICK_ACTIONS);
   const [ready, setReady] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const [filterMonth, setFilterMonth] = useState("all");
   const [currency, setCurrencyState] = useState("EGP");
   const [username, setUsernameState] = useState("");
@@ -346,6 +392,7 @@ export default function App() {
       const hasCurMonth = t.some(tx => tx.date.startsWith(curMonth));
       setFilterMonth(hasCurMonth ? curMonth : "all");
       setReady(true);
+      setTimeout(() => setShowSplash(false), 2700);
     })();
   }, []);
 
@@ -425,7 +472,7 @@ export default function App() {
     }
   };
 
-  if (!ready) return <div style={{background:C.bg,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:C.accent,fontSize:28}}>◈</div></div>;
+  if (showSplash) return <SplashScreen />;
 
   const allCats=[...expCats,...incCats];
   const filteredTxns=filterMonth==="all"?txns:txns.filter(t=>t.date.startsWith(filterMonth));
@@ -659,8 +706,12 @@ function Dashboard({ txns, bills, budgets, banks, groups, expCats, savings, filt
             <Card key={b.id} onClick={()=>onOpenBank(b)} 
                   className="interactive-card"
                   style={{padding:"14px 14px 12px", cursor: "pointer", transition: "transform 0.1s ease"}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><div style={{width:8,height:8,borderRadius:99,background:b.color,flexShrink:0}}/><span style={{color:C.muted,fontSize:12,fontWeight:600}}>{b.name}</span></div>
-              <div style={{color:bal<0?C.red:C.text,fontSize:17,fontWeight:800}}>{hideTotal?"••••":fmt(bal)}</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:99,background:b.color,flexShrink:0}}/><span style={{color:C.muted,fontSize:12,fontWeight:600}}>{b.name}</span></div>
+                {b.lowBalanceThreshold && bal <= b.lowBalanceThreshold && bal >= 0 && <span style={{fontSize:14}} title="Low balance">⚠️</span>}
+                {bal < 0 && <span style={{fontSize:14}} title="Negative balance">🔴</span>}
+              </div>
+              <div style={{color:bal<0?C.red:b.lowBalanceThreshold&&bal<=b.lowBalanceThreshold?C.yellow:C.text,fontSize:17,fontWeight:800}}>{hideTotal?"••••":fmt(bal)}</div>
             </Card>
           );
         })}
@@ -692,15 +743,21 @@ function Dashboard({ txns, bills, budgets, banks, groups, expCats, savings, filt
         <>
           <div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>Monthly Bills</div>
           <Card style={{padding:"14px 14px 12px", marginBottom:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <span style={{color:C.text,fontWeight:700,fontSize:14}}>⚡ Upcoming Payments</span>
-              <Pill color={paidBillsCount===totalBillsCount?C.accent:C.red}>{paidBillsCount}/{totalBillsCount} Paid</Pill>
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-              <span style={{color:C.red,fontSize:18,fontWeight:800}}>{hideTotal?"••••":fmt(remainingBillsAmount)}</span>
-              <span style={{color:C.muted,fontSize:13}}>remaining</span>
-            </div>
-            <ProgressBar value={paidBillsCount} max={totalBillsCount} color={C.red}/>
+            {(()=>{
+              const allPaid = paidBillsCount === totalBillsCount;
+              const billColor = allPaid ? C.accent : C.red;
+              return (<>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={{color:C.text,fontWeight:700,fontSize:14}}>{allPaid?"✅":"⚡"} {allPaid?"All Bills Paid":"Upcoming Payments"}</span>
+                  <Pill color={billColor}>{paidBillsCount}/{totalBillsCount} Paid</Pill>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                  <span style={{color:billColor,fontSize:18,fontWeight:800}}>{hideTotal?"••••":allPaid?fmt(0):fmt(remainingBillsAmount)}</span>
+                  <span style={{color:C.muted,fontSize:13}}>{allPaid?"cleared ✓":"remaining"}</span>
+                </div>
+                <ProgressBar value={paidBillsCount} max={totalBillsCount} color={billColor}/>
+              </>);
+            })()}
           </Card>
         </>
       )}
@@ -1274,20 +1331,34 @@ function MonthlyBills({ bills, onSave, banks, expCats, onAddTxn, delTxn, currenc
   const [amount, setAmount] = useState("");
   const [bankId, setBankId] = useState(banks[0]?.id||"");
   const [catId, setCatId] = useState(expCats[0]?.id||"");
+  const [dueDay, setDueDay] = useState("1");
+  const [reminderDays, setReminderDays] = useState("2");
   
   const defaultMonth = new Date().toISOString().slice(0,7);
   const [filterMonth, setFilterMonth] = useState(defaultMonth);
   const availMonths = [...new Set([...bills.flatMap(b=>b.payments?.map(p=>p.month)||[]), defaultMonth])].sort().reverse();
 
   const isPaid = (bill) => bill.payments?.some(p=>p.month === filterMonth);
+  const getReminderStatus = (bill) => {
+    if (!bill.dueDay) return null;
+    const now = new Date(); const curM = now.toISOString().slice(0,7);
+    if (isPaid(bill) || filterMonth !== curM) return null;
+    const due = new Date(now.getFullYear(), now.getMonth(), bill.dueDay);
+    const diff = Math.ceil((due - now)/(1000*60*60*24));
+    if (diff < 0) return { overdue:true, days:Math.abs(diff) };
+    if (diff <= (bill.reminderDays||2)) return { overdue:false, days:diff };
+    return null;
+  };
 
-  const openAdd=(item=null)=>{setEditItem(item);setName(item?.name||"");setAmount(item?.amount?String(item.amount):"");setBankId(item?.bankId||banks[0]?.id||"");setCatId(item?.catId||expCats[0]?.id||"");setShowAdd(true);};
+  const openAdd=(item=null)=>{setEditItem(item);setName(item?.name||"");setAmount(item?.amount?String(item.amount):"");setBankId(item?.bankId||banks[0]?.id||"");setCatId(item?.catId||expCats[0]?.id||"");setDueDay(item?.dueDay?String(item.dueDay):"1");setReminderDays(item?.reminderDays?String(item.reminderDays):"2");setShowAdd(true);};
   
   const handleSave=async()=>{
     const parsedAmt = parseFloat(amount);
     if(!name||!amount||isNaN(parsedAmt)||parsedAmt<=0)return;
-    if(editItem) await onSave(bills.map(b=>b.id===editItem.id?{...b,name,amount:parsedAmt,bankId,catId}:b));
-    else await onSave([...bills,{id:Date.now().toString(),name,amount:parsedAmt,bankId,catId,payments:[]}]);
+    const dd=Math.min(28,Math.max(1,parseInt(dueDay)||1));
+    const rd=Math.min(7,Math.max(0,parseInt(reminderDays)||2));
+    if(editItem) await onSave(bills.map(b=>b.id===editItem.id?{...b,name,amount:parsedAmt,bankId,catId,dueDay:dd,reminderDays:rd}:b));
+    else await onSave([...bills,{id:Date.now().toString(),name,amount:parsedAmt,bankId,catId,dueDay:dd,reminderDays:rd,payments:[]}]);
     setShowAdd(false);setEditItem(null);setName("");setAmount("");
   };
 
@@ -1360,7 +1431,11 @@ function MonthlyBills({ bills, onSave, banks, expCats, onAddTxn, delTxn, currenc
                   {/* Name + bank */}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{color:C.text,fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bill.name}</div>
-                    <div style={{color:C.muted,fontSize:11,marginTop:1}}>{bank?.name} · {cat?.name||"Bills"}</div>
+                    <div style={{color:C.muted,fontSize:11,marginTop:1}}>
+                      {bank?.name} · {cat?.name||"Bills"}
+                      {bill.dueDay?<span style={{color:C.faint}}> · Due {bill.dueDay}{bill.dueDay===1?"st":bill.dueDay===2?"nd":bill.dueDay===3?"rd":"th"}</span>:null}
+                    </div>
+                    {(()=>{const r=getReminderStatus(bill);return r?<div style={{color:r.overdue?C.red:C.yellow,fontSize:10,fontWeight:700,marginTop:3}}>{r.overdue?"🔴 Overdue by "+r.days+" day"+(r.days!==1?"s":""):"🟡 Due in "+r.days+" day"+(r.days!==1?"s":"")}</div>:null;})()}
                   </div>
                   {/* Amount */}
                   <div style={{color:paid?C.accent:C.red,fontSize:17,fontWeight:800,flexShrink:0}}>{fmt(bill.amount)}</div>
@@ -1388,7 +1463,12 @@ function MonthlyBills({ bills, onSave, banks, expCats, onAddTxn, delTxn, currenc
         })}
       </div>
       
-      {showAdd&&(<Modal title={editItem?"Edit Bill":"New Monthly Bill"} onClose={()=>{setShowAdd(false);setEditItem(null);}} center={false}><Input label="Bill Name" value={name} onChange={e=>setName(e.target.value)}/><div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Amount ({currency})</div><input type="number" step="any" value={amount} onChange={e=>setAmount(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px",color:C.text,fontSize:15,outline:"none",boxSizing:"border-box"}}/></div><Select label="Pay from Account" value={bankId} onChange={e=>setBankId(e.target.value)}>{banks.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</Select><Select label="Category" value={catId} onChange={e=>setCatId(e.target.value)}>{expCats.map(c=><option key={c.id} value={c.id}>{ICONS[c.icon]||"📌"} {c.name}</option>)}</Select><Btn full onClick={handleSave}>{editItem?"Update Bill":"Add Bill"}</Btn></Modal>)}
+      {showAdd&&(<Modal title={editItem?"Edit Bill":"New Monthly Bill"} onClose={()=>{setShowAdd(false);setEditItem(null);}} center={false}><Input label="Bill Name" value={name} onChange={e=>setName(e.target.value)}/><div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>Amount ({currency})</div><input type="number" step="any" value={amount} onChange={e=>setAmount(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px",color:C.text,fontSize:15,outline:"none",boxSizing:"border-box"}}/></div><Select label="Pay from Account" value={bankId} onChange={e=>setBankId(e.target.value)}>{banks.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</Select><Select label="Category" value={catId} onChange={e=>setCatId(e.target.value)}>{expCats.map(c=><option key={c.id} value={c.id}>{ICONS[c.icon]||"📌"} {c.name}</option>)}</Select>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:4}}>
+            <div><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Due Day</div><input type="number" min="1" max="28" value={dueDay} onChange={e=>setDueDay(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px",color:C.text,fontSize:15,outline:"none",boxSizing:"border-box"}}/><div style={{color:C.faint,fontSize:10,marginTop:4}}>Day of month (1–28)</div></div>
+            <div><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Remind Before</div><input type="number" min="0" max="7" value={reminderDays} onChange={e=>setReminderDays(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px",color:C.text,fontSize:15,outline:"none",boxSizing:"border-box"}}/><div style={{color:C.faint,fontSize:10,marginTop:4}}>Days before due (0–7)</div></div>
+          </div>
+          <Btn full onClick={handleSave} style={{marginTop:12}}>{editItem?"Update Bill":"Add Bill"}</Btn></Modal>)}
       {confirmDelete&&<ConfirmModal title="Delete Permanent Record?" message="Remove this from your monthly template cycle entirely?" onClose={()=>setConfirmDelete(null)} onConfirm={async()=>{await onSave(bills.filter(b=>b.id!==confirmDelete));setConfirmDelete(null);}}/>}
       {confirmUndo&&<ConfirmModal title="Undo Payment?" message={`This will mark "${confirmUndo.name}" as unpaid and remove its transaction.`} confirmColor={C.yellow} onClose={()=>setConfirmUndo(null)} onConfirm={handleUndoConfirm}/>}
     </div>
@@ -1404,16 +1484,18 @@ function Settings({ banks, expCats, incCats, groups, onBanks, onExpCats, onIncCa
   const [inputGroup, setInputGroup] = useState("daily");
   const [inputIcon, setInputIcon] = useState("others");
   const [groupCats, setGroupCats] = useState([]);
+  const [inputThreshold, setInputThreshold] = useState("");
   const [nameInput, setNameInput] = useState(username||"");
   const [confirmDel, setConfirmDel] = useState(null);
   
   const fileInputRef = useRef(null);
 
-  const openAdd=(type,item=null)=>{setModal({type,item});setInputName(item?.name||"");setInputColor(item?.color||C.accent);setInputGroup(item?.group||"daily");setInputIcon(item?.icon||"others");setGroupCats(item?.cats||[]);};
+  const openAdd=(type,item=null)=>{setModal({type,item});setInputName(item?.name||"");setInputColor(item?.color||C.accent);setInputGroup(item?.group||"daily");setInputIcon(item?.icon||"others");setGroupCats(item?.cats||[]);setInputThreshold(item?.lowBalanceThreshold?String(item.lowBalanceThreshold):"");};
   
   const handleSave=async()=>{
     if(!inputName.trim())return; const id=modal.item?.id||Date.now().toString();
-    if(modal.type==="bank") await onBanks(modal.item?banks.map(b=>b.id===id?{id,name:inputName,color:inputColor}:b):[...banks,{id,name:inputName,color:inputColor}]);
+    const thresh = parseFloat(inputThreshold); const threshVal = !isNaN(thresh) && thresh > 0 ? thresh : undefined;
+    if(modal.type==="bank") await onBanks(modal.item?banks.map(b=>b.id===id?{id,name:inputName,color:inputColor,lowBalanceThreshold:threshVal}:b):[...banks,{id,name:inputName,color:inputColor,lowBalanceThreshold:threshVal}]);
     else if(modal.type==="expCat") await onExpCats(modal.item?expCats.map(c=>c.id===id?{id,name:inputName,icon:inputIcon,group:inputGroup}:c):[...expCats,{id,name:inputName,icon:inputIcon,group:inputGroup}]);
     else if(modal.type==="incCat") await onIncCats(modal.item?incCats.map(c=>c.id===id?{id,name:inputName,icon:inputIcon}:c):[...incCats,{id,name:inputName,icon:inputIcon}]);
     else if(modal.type==="group") await onGroups(modal.item?groups.map(g=>g.id===id?{id,name:inputName,color:inputColor,cats:groupCats}:g):[...groups,{id,name:inputName,color:inputColor,cats:groupCats}]);
@@ -1468,7 +1550,7 @@ function Settings({ banks, expCats, incCats, groups, onBanks, onExpCats, onIncCa
       <div style={{color:C.text,fontSize:22,fontWeight:800,marginBottom:16}}>Settings</div>
       
       <div style={{display:"flex",gap:8,marginBottom:20,overflowX:"auto",paddingBottom:4}}>
-        {[{id:"profile",label:"👤 General"},{id:"currency",label:"💱 Currency"},{id:"banks",label:"🏦 Accounts"},{id:"expCats",label:"📤 Exp. Cat."}].map(s=>(
+        {[{id:"profile",label:"👤 General"},{id:"currency",label:"💱 Currency"},{id:"banks",label:"🏦 Accounts"},{id:"expCats",label:"📤 Exp. Cat."},{id:"groups",label:"📊 Groups"}].map(s=>(
           <button key={s.id} onClick={()=>setSection(s.id)} style={{whiteSpace:"nowrap",padding:"8px 14px",borderRadius:10,border:`1px solid ${section===s.id?C.accent:C.border}`,background:section===s.id?C.accentDim:"transparent",color:section===s.id?C.accent:C.muted,fontWeight:700,fontSize:12,cursor:"pointer"}}>{s.label}</button>
         ))}
       </div>
@@ -1508,13 +1590,39 @@ function Settings({ banks, expCats, incCats, groups, onBanks, onExpCats, onIncCa
         </SwipeRow>
       ))}</div><Btn outline full onClick={()=>openAdd("expCat")}>+ Add Expense Node</Btn></>)}
 
+      {section==="groups"&&(<>
+        <div style={{display:"flex",flexDirection:"column",gap:0}}>
+          {groups.map(g=>(
+            <SwipeRow key={g.id} onEdit={()=>openAdd("group",g)} onDelete={()=>setConfirmDel({type:"group",item:g})}>
+              <div style={{padding:"12px 16px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                  <div style={{width:10,height:10,borderRadius:99,background:g.color,flexShrink:0}}/>
+                  <span style={{color:C.text,fontWeight:700,fontSize:14}}>{g.name}</span>
+                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:5,paddingLeft:20}}>
+                  {g.cats.map(cid=>{const cat=expCats.find(c=>c.id===cid);return cat?<span key={cid} style={{background:g.color+"22",color:g.color,border:`1px solid ${g.color}44`,borderRadius:99,padding:"2px 8px",fontSize:11,fontWeight:700}}>{cat.name}</span>:null;})}
+                </div>
+              </div>
+            </SwipeRow>
+          ))}
+        </div>
+        <Btn outline full onClick={()=>openAdd("group")} style={{marginTop:8}}>+ Add Group</Btn>
+      </>)}
+
       {modal&&(
         <Modal title={`${modal.item?"Modify":"Append"} ${modal.type}`} onClose={()=>setModal(null)} center={false}>
           <Input label="Label Name" value={inputName} onChange={e=>setInputName(e.target.value)}/>
-          {modal.type==="bank"&&(<div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Hex Tone Color</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[C.accent,C.red,C.blue,C.yellow,C.purple,"#fb923c","#34d399","#f472b6"].map(col=>(<button key={col} onClick={()=>setInputColor(col)} style={{width:28,height:28,borderRadius:99,background:col,border:inputColor===col?"3px solid white":"3px solid transparent",cursor:"pointer"}}/>))}</div></div>)}
+          {modal.type==="bank"&&(<>
+            <div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Color</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[C.accent,C.red,C.blue,C.yellow,C.purple,"#fb923c","#34d399","#f472b6"].map(col=>(<button key={col} onClick={()=>setInputColor(col)} style={{width:28,height:28,borderRadius:99,background:col,border:inputColor===col?"3px solid white":"3px solid transparent",cursor:"pointer"}}/>))}</div></div>
+            <div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>Low Balance Alert</div><input type="number" min="0" placeholder="e.g. 200" value={inputThreshold} onChange={e=>setInputThreshold(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px",color:C.text,fontSize:15,outline:"none",boxSizing:"border-box"}}/><div style={{color:C.faint,fontSize:11,marginTop:4}}>Show ⚠️ when balance falls below this amount (0 = disabled)</div></div>
+          </>)}
           {modal.type==="expCat"&&(<div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>System Glyphs Icon</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{iconKeys.map(k=><button key={k} onClick={()=>setInputIcon(k)} style={{width:36,height:36,borderRadius:8,background:inputIcon===k?C.accentDim:C.bg,border:`1px solid ${inputIcon===k?C.accent:C.border}`,cursor:"pointer",fontSize:18}}>{ICONS[k]}</button>)}</div></div>)}
-          {modal.type==="expCat"&&(<Select label="Group Allocation Tag" value={inputGroup} onChange={e=>setInputGroup(e.target.value)}>{["daily","fixed","lifestyle"].map(g=><option key={g} value={g}>{g}</option>)}</Select>)}
-          <Btn full onClick={handleSave} style={{marginTop:8}}>Commit Settings</Btn>
+          {modal.type==="expCat"&&(<Select label="Group Tag" value={inputGroup} onChange={e=>setInputGroup(e.target.value)}>{["daily","fixed","lifestyle","growth","other"].map(g=><option key={g} value={g}>{g}</option>)}</Select>)}
+          {modal.type==="group"&&(<>
+            <div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Color</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[C.accent,C.red,C.blue,C.yellow,C.purple,"#fb923c","#34d399","#f472b6"].map(col=>(<button key={col} onClick={()=>setInputColor(col)} style={{width:28,height:28,borderRadius:99,background:col,border:inputColor===col?"3px solid white":"3px solid transparent",cursor:"pointer"}}/>))}</div></div>
+            <div style={{marginBottom:14}}><div style={{color:C.muted,fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Categories</div><div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflow:"auto",background:C.bg,padding:10,borderRadius:10,border:`1px solid ${C.border}`}}>{expCats.map(c=>{const checked=groupCats.includes(c.id);return(<label key={c.id} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"4px 0",userSelect:"none"}}><div onClick={()=>setGroupCats(checked?groupCats.filter(x=>x!==c.id):[...groupCats,c.id])} style={{width:18,height:18,borderRadius:4,border:`2px solid ${checked?C.accent:C.faint}`,background:checked?C.accentDim:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{checked&&<span style={{color:C.accent,fontSize:12}}>✓</span>}</div><span style={{color:C.text,fontSize:14}}>{ICONS[c.icon]||"📌"} {c.name}</span></label>);})}</div></div>
+          </>)}
+          <Btn full onClick={handleSave} style={{marginTop:8}}>Save</Btn>
         </Modal>
       )}
       {confirmDel&&<ConfirmModal title="Confirm Drop Operation?" message="Are you absolutely sure? Associated tracking nodes might mismatch." onClose={()=>setConfirmDel(null)} onConfirm={doDelete}/>}
