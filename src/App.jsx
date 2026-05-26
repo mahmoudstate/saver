@@ -70,7 +70,13 @@ const DEFAULT_EXP_CATS = [
   { id:"transport", name:"Transport", icon:"transport", group:"daily" }, { id:"bills", name:"Bills", icon:"bills", group:"fixed" },
   { id:"shopping", name:"Shopping", icon:"shopping", group:"lifestyle" }, { id:"entertainment", name:"Fun", icon:"entertainment", group:"lifestyle" },
 ];
-const DEFAULT_INC_CATS = [{ id:"salary", name:"Salary", icon:"salary" }, { id:"freelance", name:"Freelance", icon:"freelance" }];
+const DEFAULT_INC_CATS = [
+  { id: "salary", name: "Salary", icon: "salary" },
+  { id: "freelance", name: "Freelance", icon: "freelance" },
+  { id: "gift", name: "Gift", icon: "gift" },
+  { id: "investment", name: "Investment", icon: "investment" },
+  { id: "other_income", name: "Other Income", icon: "other_income" }
+];
 const DEFAULT_GROUPS = [
   { id:"daily", name:"Daily Life", color:C.accent, cats:["food","coffee","transport"] },
   { id:"fixed", name:"Fixed Costs", color:C.red, cats:["bills"] },
