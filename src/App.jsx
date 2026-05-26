@@ -66,9 +66,30 @@ const ICONS = {
 
 const DEFAULT_BANKS = [{ id:"b1", name:"CIB", color:C.blue }, { id:"b2", name:"NBE", color:C.accent }, { id:"b3", name:"Cash", color:C.yellow }];
 const DEFAULT_EXP_CATS = [
-  { id:"food", name:"Food", icon:"food", group:"daily" }, { id:"coffee", name:"Coffee", icon:"coffee", group:"daily" },
-  { id:"transport", name:"Transport", icon:"transport", group:"daily" }, { id:"bills", name:"Bills", icon:"bills", group:"fixed" },
-  { id:"shopping", name:"Shopping", icon:"shopping", group:"lifestyle" }, { id:"entertainment", name:"Fun", icon:"entertainment", group:"lifestyle" },
+  { id: "food", name: "Food", icon: "food", group: "daily" },
+  { id: "coffee", name: "Coffee", icon: "coffee", group: "daily" },
+  { id: "transport", name: "Transport", icon: "transport", group: "daily" },
+  { id: "bills", name: "Bills", icon: "bills", group: "fixed" },
+  { id: "shopping", name: "Shopping", icon: "shopping", group: "lifestyle" },
+  { id: "entertainment", name: "Fun", icon: "entertainment", group: "lifestyle" },
+  { id: "personal", name: "Personal", icon: "personal", group: "daily" },
+  { id: "health", name: "Health", icon: "health", group: "daily" },
+  { id: "rent", name: "Rent", icon: "rent", group: "fixed" },
+  { id: "education", name: "Education", icon: "education", group: "growth" },
+  { id: "tech", name: "Tech", icon: "tech", group: "lifestyle" },
+  { id: "parking", name: "Parking", icon: "parking", group: "daily" },
+  { id: "fuel", name: "Fuel", icon: "fuel", group: "daily" },
+  { id: "car_repair", name: "Car Repair", icon: "car_repair", group: "fixed" },
+  { id: "takeaway", name: "Takeaway", icon: "takeaway", group: "daily" },
+  { id: "barber", name: "Barber", icon: "barber", group: "personal" },
+  { id: "pets", name: "Pets", icon: "pets", group: "personal" },
+  { id: "travel", name: "Travel", icon: "travel", group: "lifestyle" },
+  { id: "gaming", name: "Gaming", icon: "gaming", group: "lifestyle" },
+  { id: "pharmacy", name: "Pharmacy", icon: "pharmacy", group: "health" },
+  { id: "laundry", name: "Laundry", icon: "laundry", group: "daily" },
+  { id: "tuition", name: "Tuition", icon: "tuition", group: "growth" },
+  { id: "gym", name: "Gym", icon: "gym", group: "health" },
+  { id: "others", name: "Others", icon: "others", group: "other" }
 ];
 const DEFAULT_INC_CATS = [
   { id: "salary", name: "Salary", icon: "salary" },
